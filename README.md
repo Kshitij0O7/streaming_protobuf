@@ -1,6 +1,6 @@
 # bitquery-protobuf-schema
 
-bitquery-protobuf-schema is an NPM package by Bitquery that returns Protocol Buffers (Protobuf) schemas for the Bitquery Protobuf Kafka streams by providing the topic name. The main purpose of this package is to avoid the hastle of downloading the `.proto` files again and again.
+bitquery-protobuf-schema is an NPM package by Bitquery that returns Protocol Buffers (Protobuf) schemas for the Bitquery Protobuf Kafka streams by providing the topic name. Bitquery is an onchain data provider firm that provides blockchain data solutions in the form of GraphQL APIs, Websocket and Kafka streams. The main purpose of this package is to avoid the hastle of downloading the `.proto` files again and again.
 
 ## Installation
 
