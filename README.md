@@ -15,10 +15,12 @@ npm install streaming_protobuf
 The usage for the following package is as follows.
 
 ``` js
-    let ParsedIdlBlockMessage;
-    let topic = '<topic>';
+const {loadProto} = require('bitquery-protobuf-schema');
 
-    ParsedIdlBlockMessage = await loadProto(topic); 
+let ParsedIdlBlockMessage;
+let topic = '<topic>';
+
+ParsedIdlBlockMessage = await loadProto(topic); 
 ```
 
 This `ParsedIdlBlockMessage` variable can then be used for decoding the recieved Protobuf message as shown below, where message is a singular message recieved from the Bitquery Protobuf stream.

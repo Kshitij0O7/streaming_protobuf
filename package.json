@@ -1,6 +1,6 @@
 {
   "name": "bitquery-protobuf-schema",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Returns Protobuf schemas for the data streamed and stored in S3 for a given topic",
   "main": "index.js",
   "scripts": {
