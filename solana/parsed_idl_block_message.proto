@@ -1,7 +1,7 @@
 syntax = "proto3";
 package solana_messages;
  
-import "solana/block_message.proto";
+import "../solana/block_message.proto";
 
 message ParsedArgument {
   string  Name = 1;

@@ -2,7 +2,7 @@ syntax = 'proto3';
 
 package utxo_messages;
 
-import "utxo/block_message.proto";
+import "../utxo/block_message.proto";
 
 message ParsedBlockMessage {
   BlockHeader Header = 1;

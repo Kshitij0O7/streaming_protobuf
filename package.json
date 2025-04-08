@@ -1,0 +1,16 @@
+{
+  "name": "streaming_protobuf",
+  "version": "1.0.0",
+  "description": "Protobuf schemas for the data streamed and stored in S3",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "path": "^0.12.7",
+    "protobufjs": "^7.4.0"
+  }
+}
