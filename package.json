@@ -1,12 +1,12 @@
 {
-  "name": "streaming_protobuf",
-  "version": "1.0.0",
-  "description": "Protobuf schemas for the data streamed and stored in S3",
+  "name": "bitquery-protobuf-schema",
+  "version": "1.0.2",
+  "description": "Returns Protobuf schemas for the data streamed and stored in S3 for a given topic",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
+  "keywords": ["Protobuf", "Kafka", "Blockchain", "Data", "EVM", "Solana", "Tron"],
   "author": "",
   "license": "ISC",
   "dependencies": {

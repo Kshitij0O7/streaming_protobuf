@@ -1,27 +1,33 @@
-# Protobuf Schemas for Streaming
+# bitquery-protobuf-schema
 
-NPM package for Protobuf schemas for the data streamed and stored in S3
+bitquery-protobuf-schema is an NPM package by Bitquery that returns Protocol Buffers (Protobuf) schemas for the Bitquery Protobuf Kafka streams by providing the topic name. The main purpose of this package is to avoid the hastle of downloading the `.proto` files again and again.
 
-Contains the schemas by the type of blockchain
+## Installation
 
+To install the package, use npm:
 
-Example to use utility to decode
-
-```
-brew install protobuf-c
-lz4cat FILE.block.lz4 | protoc-c --decode evm_messages.BlockMessage evm/block_message.proto > output.txt
-```
-examples
-
-```
-lz4cat 000025207397_0x72e7402c5fc28ef31e0528c5f25a95469c124705952ce89d5a10d60f334c4057_b417e0808dc463173e34c088a028ed2152ef38adbfb6033d3ea2943039c7b463.block.lz4 | protoc-c --decode evm_messages.BlockMessage evm/block_message.proto > out2.txt
-
-lz4cat 000120696577_0x299f8fcfdeea511802fa48aa4f18a916b27a0de0aedff2332d306c2244b89284_499f95c2aa01a45db19a635652810740cc412b286fcd7a8660839a2a1cbd8668.block.lz4 | protoc-c --decode evm_messages.BlockMessage evm/block_message.proto > out6.txt
+``` sh
+npm install streaming_protobuf
 ```
 
+## Usage
 
-## Building golang code
+The usage for the following package is as follows.
 
-```bash
-make all
+``` js
+    let ParsedIdlBlockMessage;
+    let topic = '<topic>';
+
+    ParsedIdlBlockMessage = await loadProto(topic); 
 ```
+
+This `ParsedIdlBlockMessage` variable can then be used for decoding the recieved Protobuf message as shown below, where message is a singular message recieved from the Bitquery Protobuf stream.
+
+``` js
+    const buffer = message.value;
+    const decoded = ParsedIdlBlockMessage.decode(buffer);
+```
+
+To get started with the Bitquery Protobuf Kaka streams contact - sales@bitquery.io. 
+
+To read more about Bitquery Protobuf Kafka solutions checkout their official [documentation](https://docs.bitquery.io/docs/streams/kafka-streaming-concepts/).
