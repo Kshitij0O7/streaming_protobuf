@@ -7,7 +7,7 @@ bitquery-protobuf-schema is an NPM package by Bitquery that returns Protocol Buf
 To install the package, use npm:
 
 ``` sh
-npm install streaming_protobuf
+npm i bitquery-protobuf-schema
 ```
 
 ## Usage

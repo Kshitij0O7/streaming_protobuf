@@ -67,6 +67,8 @@ const loadProto = async (topic) => {
         'tron.broadcasted.tokens.proto': tronFiles[1],
         'tron.broadcasted.raw.proto': tronFiles[2],
         'tron.broadcasted.transactions.proto': tronFiles[3],
+        'btc.transactions.proto': 'utxo/parsed_block_message.proto',
+        'trading.prices': 'market/price_index.proto'
     }
 
     let topicToMessage = {
@@ -105,6 +107,8 @@ const loadProto = async (topic) => {
         'tron.broadcasted.tokens.proto': tronMessages[1],
         'tron.broadcasted.raw.proto': tronMessages[2],
         'tron.broadcasted.transactions.proto': tronMessages[3],
+        'btc.transactions.proto': 'utxo_messages.ParsedBlockMessage',
+        'trading.prices': 'marketdata_messages.PriceIndexMessage'   
     }
 
     const filePath = path.join(__dirname, topicToPath[topic])
