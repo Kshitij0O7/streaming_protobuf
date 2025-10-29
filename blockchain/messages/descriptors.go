@@ -34,3 +34,53 @@ func (d BlockDescriptor) BlockHeight() int64 {
 func (descriptor *BlockMessageDescriptor) IsBroadcasted() bool {
 	return len(descriptor.TransactionHashes) > 0
 }
+
+const BitMaskForTxHashCorrelationId = 0b11 // masks 2-bit field, 0 to 3 inclusive
+var BitMaskCorrelationKeys = [][]byte{[]byte("red_stream"), []byte("blue_stream"), []byte("green_stream"), []byte("yellow_stream")}
+
+func (descriptor *BlockMessageDescriptor) CorrelationId() []byte {
+	if descriptor.IsBroadcasted() {
+
+		if len(descriptor.TransactionHashes) == 1 {
+			txHash := descriptor.TransactionHashes[0]
+			return BitMaskCorrelationKeys[hexDigitToInt(txHash[len(txHash)-1])]
+		}
+
+		var txIndex = -1
+		for _, txHash := range descriptor.TransactionHashes {
+			index := hexDigitToInt(txHash[len(txHash)-1])
+			if txIndex == -1 {
+				txIndex = index
+				continue
+			}
+			if txIndex != index {
+				return nil
+			}
+		}
+		if txIndex == -1 {
+			return nil
+		}
+		return BitMaskCorrelationKeys[txIndex]
+	}
+
+	if len(descriptor.BlockHash) > 0 {
+		return []byte(descriptor.BlockHash)
+	}
+
+	return nil
+
+}
+
+func hexDigitToInt(c byte) int {
+	switch c {
+	case '0', '4', '8', 'c', 'C':
+		return 0
+	case '1', '5', '9', 'd', 'D':
+		return 1
+	case '2', '6', 'a', 'A', 'e', 'E':
+		return 2
+	default:
+		// Invalid hex digit — handle as needed
+		return 3
+	}
+}

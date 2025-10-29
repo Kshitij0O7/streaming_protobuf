@@ -34,15 +34,31 @@ message TokenTransfer {
   uint32 Index = 13;
 
   TransactionHeader TransactionHeader = 14;
-
+  Signature TransactionSignature = 15;
 }
 
+message TransactionBalances {
+  TransactionHeader TransactionHeader = 1;
+  Signature TransactionSignature = 2;
+  repeated TokenBalance TokenBalances = 3;
+}
+
+message TokenBalance {
+  bytes  Address = 1;
+  TokenInfo Currency = 2;
+  bytes  PreBalance = 3;
+  bytes  PostBalance = 4;
+  int32 BalanceChangeReasonCode = 5;
+  TokenOwnership TokenOwnership = 6;
+  bytes  TotalSupply = 7;
+}
 
 message TokenBlockMessage {
   Chain Chain = 1;
   BlockHeader Header = 2;
   repeated TokenTransfer Transfers = 5;
   optional BlockHeader L1Header = 6;
+  repeated TransactionBalances TransactionBalances = 7;
 }
 
 
