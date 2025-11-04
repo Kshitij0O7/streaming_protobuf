@@ -14,10 +14,11 @@ message TokenInfo {
   bool   HasURI = 8;
   bool   Fungible = 9;
   string  AssetId = 10;
+  int32   BalanceSlotIndex = 11;
 }
 
 message TokenTransfer {
-  uint64 TransactionIndex = 1 [deprecated = true];
+  uint64 TransactionIndex = 1;
   uint64 CallIndex = 2;
   uint64 LogIndex = 3;
 
@@ -38,15 +39,16 @@ message TokenTransfer {
 }
 
 message TransactionBalances {
-  TransactionHeader TransactionHeader = 1;
-  Signature TransactionSignature = 2;
-  repeated TokenBalance TokenBalances = 3;
+  uint64 TransactionIndex = 1;
+  TransactionHeader TransactionHeader = 2;
+  Signature TransactionSignature = 3;
+  repeated TokenBalance TokenBalances = 4;
 }
 
 message TokenBalance {
   bytes  Address = 1;
   TokenInfo Currency = 2;
-  bytes  PreBalance = 3;
+  optional bytes PreBalance = 3;
   bytes  PostBalance = 4;
   int32 BalanceChangeReasonCode = 5;
   TokenOwnership TokenOwnership = 6;
