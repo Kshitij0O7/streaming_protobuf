@@ -295,11 +295,14 @@ message Token {
   bool   Fungible = 2;
   int32  Decimals = 3;
   bytes  TotalSupply = 4;
+  string Symbol = 5;
+  string Name = 6;
 }
 
 message TokenOwnership {
   bytes Id = 1;
   bool  Owns = 2;
+  string Uri = 3;
 }
 
 message TokenBalanceUpdate {
