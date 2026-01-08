@@ -1,75 +1,83 @@
-# Protobuf Schemas for Streaming
+# bitquery-protobuf-schema
 
-Protobuf schemas for the data streamed and stored in S3
+**bitquery-protobuf-schema** is an NPM package by **Bitquery**, designed to simplify working with **on-chain data streaming** pipelines powered by **Protobuf** and **Kafka**.
+This package automatically returns Protocol Buffer (`.proto`) schemas for **Bitquery’s Protobuf Kafka streams** when you provide the stream's topic name.
 
-Contains the schemas by the type of blockchain
+Bitquery is a leading **on-chain data provider**, offering blockchain intelligence via **GraphQL APIs**, **WebSocket streaming**, and **high-performance Kafka streams**.
+This package removes the hassle of repeatedly downloading `.proto` files manually and allows developers to integrate directly with Bitquery’s **real-time blockchain data streams**.
 
+---
 
-Example to use utility to decode
+## 🚀 Features
 
-```
-brew install protobuf-c
-lz4cat FILE.block.lz4 | protoc-c --decode evm_messages.BlockMessage evm/block_message.proto > output.txt
-```
-examples
+* Easy loading of **Protobuf schemas** for Bitquery Kafka stream topics
+* Ideal for applications using **real-time streaming on-chain data**
+* Automatically decodes **blockchain events**, **transactions**, **logs**, **shreds**, and more
+* Useful for building analytics dashboards, trading bots, monitoring tools, and ingestion pipelines
+* Zero need to manually store or update `.proto` files
 
-```
-lz4cat 000025207397_0x72e7402c5fc28ef31e0528c5f25a95469c124705952ce89d5a10d60f334c4057_b417e0808dc463173e34c088a028ed2152ef38adbfb6033d3ea2943039c7b463.block.lz4 | protoc-c --decode evm_messages.BlockMessage evm/block_message.proto > out2.txt
+---
 
-lz4cat 000120696577_0x299f8fcfdeea511802fa48aa4f18a916b27a0de0aedff2332d306c2244b89284_499f95c2aa01a45db19a635652810740cc412b286fcd7a8660839a2a1cbd8668.block.lz4 | protoc-c --decode evm_messages.BlockMessage evm/block_message.proto > out6.txt
-```
+## 📦 Installation
 
+Install with npm:
 
-## Building golang and python code
-
-```bash
-make all
-```
-
-
-## Note on using python code in your project
-
-If you need to use protobuf generated files in your project, use git submodules, 
-like:
-
-```
-git submodule add https://github.com/bitquery/streaming_protobuf.git streaming_protobuf
-git submodule update --init --recursive
+```sh
+npm i bitquery-protobuf-schema
 ```
 
-after that add symlinks to your project:
+---
 
-```
-ln -s streaming_protobuf/tron/python/tron ./tron 
-ln -s streaming_protobuf/evm/python/evm ./evm 
-ln -s streaming_protobuf/solana/python/solana ./solana
-```
+## 🧠 Usage
 
-commit submodules and links to git after that.
+Here's how to load a Protobuf schema for any **Bitquery Kafka stream topic**:
 
-To use protobuf you will need to install protobuf:
+```js
+const { loadProto } = require('bitquery-protobuf-schema');
 
-```
-pip install protobuf==6.33.0
-```
+let ParsedIdlBlockMessage;
+let topic = '<topic>';
 
-In code you do like this
-
+ParsedIdlBlockMessage = await loadProto(topic);
 ```
 
-    with open(local_path, "rb") as f:
-        compressed = f.read()
-    try:
-        decompressed = lz4.frame.decompress(compressed)
-    except Exception as e:
-        logger.error(f"Failed to decompress {local_path}: {e}")
-        return {}
-            
-    block = evm_message.BlockMessage()
-    try:
-        block.ParseFromString(decompressed)
-    except Exception as e:
-        logger.error(f"Failed to parse protobuf {local_path}: {e}")
-        return {}
-        
+Once loaded, use the parsed schema to **decode incoming Protobuf messages** from the Kafka stream:
+
+```js
+const buffer = message.value;
+const decoded = ParsedIdlBlockMessage.decode(buffer);
 ```
+
+This gives you fully structured **on-chain data** decoded directly from Bitquery's **Protobuf streaming infrastructure**.
+
+---
+
+## 📡 Access Bitquery Protobuf Kafka Streams
+
+To start streaming real-time blockchain data using Protobuf + Kafka, contact:
+📧 **[sales@bitquery.io](mailto:sales@bitquery.io)**
+
+---
+
+## 📚 Documentation
+
+Explore Bitquery’s on-chain data streaming docs:
+
+* [**Kafka Streaming Concepts**](https://docs.bitquery.io/docs/streams/kafka-streaming-concepts/?utm_source=github&utm_medium=npm&utm_campaign=proto_schema)
+
+* [**Bitcoin Protobuf Streams**](https://docs.bitquery.io/docs/streams/protobuf/chains/Bitcoin-protobuf/?utm_source=github&utm_medium=npm&utm_campaign=proto_schema)
+
+* [**EVM Protobuf Streams**](https://docs.bitquery.io/docs/streams/protobuf/chains/EVM-protobuf/?utm_source=github&utm_medium=npm&utm_campaign=proto_schema)
+
+* [**Solana Shreds Stream (High-performance Solana data)**](https://docs.bitquery.io/docs/streams/protobuf/chains/Solana-protobuf/?utm_source=github&utm_medium=npm&utm_campaign=proto_schema)
+
+* [**Tron Protobuf Stream**](https://docs.bitquery.io/docs/streams/protobuf/chains/Tron-protobuf/?utm_source=github&utm_medium=npm&utm_campaign=proto_schema)
+
+* [**Trading Bot Tutorial (Kafka Sniper Bot)**](https://docs.bitquery.io/docs/streams/sniper-trade-using-bitquery-kafka-stream/?utm_source=github&utm_medium=npm&utm_campaign=proto_schema)
+
+---
+
+## 🏁 Summary
+
+`bitquery-protobuf-schema` helps developers decode **streaming, real-time on-chain data** from Bitquery’s **Kafka Protobuf infrastructure** without managing `.proto` files manually.
+Whether you're building blockchain analytics, DeFi trading bots, monitoring systems, or ingestion pipelines, this package streamlines your integration with Bitquery’s high-performance data streams.
