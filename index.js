@@ -7,7 +7,8 @@ const loadProto = async (topic) => {
         'evm/dex_block_message.proto', 
         'evm/token_block_message.proto', 
         'evm/block_message.proto', 
-        'evm/parsed_abi_block_message.proto'
+        'evm/parsed_abi_block_message.proto',
+        'evm/dex_pool_block_message.proto',
     ];
 
     let evmMessages = [
@@ -15,6 +16,7 @@ const loadProto = async (topic) => {
         'evm_messages.TokenBlockMessage',
         'evm_messages.BlockMessage',
         'evm_messages.ParsedAbiBlockMessage',
+        'evm_messages.DexPoolBlockMessage',
     ];
 
     let tronFiles = [
@@ -68,7 +70,11 @@ const loadProto = async (topic) => {
         'tron.broadcasted.raw.proto': tronFiles[2],
         'tron.broadcasted.transactions.proto': tronFiles[3],
         'btc.transactions.proto': 'utxo/parsed_block_message.proto',
-        'trading.prices': 'market/price_index.proto'
+        'trading.prices': 'market/price_index.proto',
+        'eth.dexpools.proto': evmFiles[4],
+        'bsc.dexpools.proto': evmFiles[4],
+        'base.dexpools.proto': evmFiles[4],
+        'matic.dexpools.proto': evmFiles[4],
     }
 
     let topicToMessage = {
@@ -108,7 +114,11 @@ const loadProto = async (topic) => {
         'tron.broadcasted.raw.proto': tronMessages[2],
         'tron.broadcasted.transactions.proto': tronMessages[3],
         'btc.transactions.proto': 'utxo_messages.ParsedBlockMessage',
-        'trading.prices': 'marketdata_messages.PriceIndexMessage'   
+        'trading.prices': 'marketdata_messages.PriceIndexMessage',
+        'eth.dexpools.proto': evmMessages[4],
+        'bsc.dexpools.proto': evmMessages[4],
+        'base.dexpools.proto': evmMessages[4],
+        'matic.dexpools.proto': evmMessages[4],
     }
 
     const filePath = path.join(__dirname, topicToPath[topic])
