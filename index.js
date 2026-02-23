@@ -9,6 +9,7 @@ const loadProto = async (topic) => {
         'evm/block_message.proto', 
         'evm/parsed_abi_block_message.proto',
         'evm/dex_pool_block_message.proto',
+        'evm/prediction_market_block_message.proto'
     ];
 
     let evmMessages = [
@@ -17,6 +18,7 @@ const loadProto = async (topic) => {
         'evm_messages.BlockMessage',
         'evm_messages.ParsedAbiBlockMessage',
         'evm_messages.DexPoolBlockMessage',
+        'evm_messages.PredictionMarketBlockMessage'
     ];
 
     let tronFiles = [
@@ -75,6 +77,8 @@ const loadProto = async (topic) => {
         'bsc.dexpools.proto': evmFiles[4],
         'base.dexpools.proto': evmFiles[4],
         'matic.dexpools.proto': evmFiles[4],
+        'matic.predictions.proto': evmFiles[5],
+        'matic.broadcasted.predictions.proto': evmFiles[5]
     }
 
     let topicToMessage = {
@@ -119,6 +123,8 @@ const loadProto = async (topic) => {
         'bsc.dexpools.proto': evmMessages[4],
         'base.dexpools.proto': evmMessages[4],
         'matic.dexpools.proto': evmMessages[4],
+        'matic.predictions.proto': evmMessages[5],
+        'matic.broadcasted.predictions.proto': evmMessages[5],
     }
 
     const filePath = path.join(__dirname, topicToPath[topic])
