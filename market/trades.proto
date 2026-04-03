@@ -1,10 +1,10 @@
 syntax = "proto3";
 package marketdata_messages;
 
-import "market/price_index.proto";
-import "market/trader.proto";
-import "market/pool.proto";
-import "market/transaction.proto";
+import "../market/price_index.proto";
+import "../market/trader.proto";
+import "../market/pool.proto";
+import "../market/transaction.proto";
 
 enum Side {
   Buy = 0;
