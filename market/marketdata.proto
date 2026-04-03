@@ -16,7 +16,7 @@ message MarketdataMessage {
 message Token {
   string Id = 1;
   string Did = 2;
-  string Network = 3;
+  string Network = 3; // LowCardinality string in clickhouse
   optional string Address = 4;
   optional string TokenId = 5; // For networks like TRON and TRC-10
   bool IsNative = 6;
@@ -31,11 +31,16 @@ message CurrencyPriceBucket {
   string Symbol = 3;
   string OriginalId = 4;
   PriceBucket Bucket = 6;
+
+  double CirculatingSupply = 7;
+  double TotalSupply = 8;
+  double MaxSupply = 9;
 }
 
 message Price {
   uint64 Time = 1;
   double Usd = 2;
+  double MarketCap = 3;
 }
 
 message PriceBucket {

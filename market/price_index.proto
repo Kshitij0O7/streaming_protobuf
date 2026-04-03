@@ -11,12 +11,12 @@ message Currency {
 
 message Market {
   string Id = 1;
-  string Network = 2;
+  string Network = 2; // LowCardinality string in clickhouse
   string NetworkBid = 3;
   string Name = 4;
   string Address = 5;
-  string Protocol = 6;
-  string ProtocolFamily = 7;
+  string Protocol = 6; // LowCardinality string in clickhouse
+  string ProtocolFamily = 7; // LowCardinality string in clickhouse
   string Program = 8;
 }
 
@@ -83,15 +83,32 @@ message PriceUpdate {
   EstimatedPrices Estimates = 4;
 }
 
+message MarketCapUpdate {
+  double TotalSupply = 1;
+  double MarketCap = 2;
+  double FullyDilutedValuationUsd = 3; // Fully diluted valuation (FDV) is a market cap if the max supply was in circulation
+
+  optional double CirculatingSupply = 4;
+  optional double MaxSupply = 5;
+}
+
 message CurrencyUpdate {
   Currency Currency = 1;
   PriceUpdate PriceUpdate = 2;
+  optional MarketCapUpdate MarketCapUpdate = 3;
 }
 
 message TokenUpdate {
   Currency Currency = 1;
   Token Token = 2;
   PriceUpdate PriceUpdate = 3;
+  optional MarketCapUpdate MarketCapUpdate = 4;
+  Ranking Ranking = 5;
+}
+
+message Ranking {
+  uint32 Position = 1;
+  float  Weight = 2;
 }
 
 message PairUpdate {
@@ -102,6 +119,8 @@ message PairUpdate {
   Market Market = 5;
   PriceUpdate PriceUpdate = 6;
   PriceUpdate PriceUpdateInQuoteTokens = 7;
+  optional MarketCapUpdate MarketCapUpdate = 8;
+  Ranking Ranking = 9;
 }
 
 message PriceIndexMessage {
