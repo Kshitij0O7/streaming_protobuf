@@ -42,12 +42,20 @@ message Currency {
   bool Parsed = 23;
 
   uint64 TotalSupply = 24;
+  double Multiplier = 25;
+
+  float PriceInUsd = 26;
+  float TotalSupplyInUsd = 27;
 }
 
 
 message CurrencyBalanceUpdate {
   BalanceUpdate BalanceUpdate = 1;
   Currency Currency = 2;
+
+  float PreBalanceInUsd = 3;
+  float PostBalanceInUsd = 4;
+  float AmountInUsd = 5;
 }
 
 message Transfer {
@@ -62,6 +70,8 @@ message Transfer {
   Currency Currency = 6;
 
   ParsedIdlInstruction Instruction = 7;
+
+  float AmountInUsd = 8;
 }
 
 message InstructionBalanceUpdate {
@@ -81,6 +91,8 @@ message ParsedTokenTransaction {
   repeated Transfer Transfers = 5;
   repeated CurrencyBalanceUpdate    BalanceUpdates = 6;
   repeated InstructionBalanceUpdate InstructionBalanceUpdates = 7;
+
+  float FeeInUsd = 8;
 }
 
 message TokenBlockMessage {
