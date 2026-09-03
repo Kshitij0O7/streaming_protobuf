@@ -3,7 +3,7 @@ syntax = "proto3";
 
 package hyperliquid_messages;
 
-import "hyperliquid/hyperliquid_block_message.proto"; // for the shared Market message
+import "../hyperliquid/hyperliquid_block_message.proto"; // for the shared Market message
 
 // TimeInterval identifies a candle bucket. All values are epoch SECONDS (not ns) to
 // match toStartOfInterval semantics; Duration is the bucket width in seconds

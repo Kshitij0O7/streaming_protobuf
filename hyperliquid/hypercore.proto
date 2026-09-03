@@ -2,13 +2,13 @@ syntax = "proto3";
 
 package hyperliquid_messages;
 
-import "hyperliquid/fills.proto";
-import "hyperliquid/order_statuses.proto";
-import "hyperliquid/raw_book_diffs.proto";
-import "hyperliquid/twap_statuses.proto";
-import "hyperliquid/oracle_updates.proto";
-import "hyperliquid/misc_events.proto";
-import "hyperliquid/core_writer_actions.proto";
+import "../hyperliquid/fills.proto";
+import "../hyperliquid/order_statuses.proto";
+import "../hyperliquid/raw_book_diffs.proto";
+import "../hyperliquid/twap_statuses.proto";
+import "../hyperliquid/oracle_updates.proto";
+import "../hyperliquid/misc_events.proto";
+import "../hyperliquid/core_writer_actions.proto";
 
 message HyperCoreBlock {
   uint64 BlockNumber = 1;

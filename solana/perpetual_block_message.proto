@@ -1,7 +1,7 @@
 syntax = "proto3";
 package solana_messages;
 
-import "solana/block_message.proto";
+import "../solana/block_message.proto";
 
 // Solana perpetual-futures stream. First implementation: Phoenix Eternal —
 // see streaming_processor_solana/_docs/phoenix.trade/Readme.md.

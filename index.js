@@ -82,6 +82,7 @@ const loadProto = async (topic) => {
         'solana.transactions.proto': 'solana/parsed_idl_block_message.proto',
         'solana.tokens.proto': 'solana/token_block_message.proto',
         'solana.dextrades.proto': 'solana/dex_block_message.proto',
+        'solana.perpetual.proto': 'solana/perpetual_block_message.proto',
         'tron.dextrades.proto': tronFiles[0],
         'tron.tokens.proto': tronFiles[1],
         'tron.transactions.proto': tronFiles[3],
@@ -93,6 +94,8 @@ const loadProto = async (topic) => {
         'trading.trades': 'market/trades.proto',
         'matic.predictions.proto': evmFiles[5],
         'matic.broadcasted.predictions.proto': evmFiles[5],
+        'hyperliquidcore.messages.proto': 'hyperliquid/hyperliquid_block_message.proto',
+        'hyperliquid.candles.proto': 'hyperliquid/candles.proto',
     }
 
     let topicToMessage = {
@@ -142,6 +145,7 @@ const loadProto = async (topic) => {
         'solana.transactions.proto': 'solana_messages.ParsedIdlBlockMessage',
         'solana.tokens.proto': 'solana_messages.TokenBlockMessage',
         'solana.dextrades.proto': 'solana_messages.DexParsedBlockMessage',
+        'solana.perpetual.proto': 'solana_messages.PerpetualBlockMessage',
         'tron.dextrades.proto': tronMessages[0],
         'tron.tokens.proto': tronMessages[1],
         'tron.transactions.proto': tronMessages[3],
@@ -153,6 +157,8 @@ const loadProto = async (topic) => {
         'trading.trades': 'marketdata_messages.TradesMessage',
         'matic.predictions.proto': evmMessages[5],
         'matic.broadcasted.predictions.proto': evmMessages[5],
+        'hyperliquidcore.messages.proto': 'hyperliquid_messages.HyperliquidCoreBlockMessage',
+        'hyperliquid.candles.proto': 'hyperliquid_messages.CandlesBlockMessage',
     }
 
     const filePath = path.join(__dirname, topicToPath[topic])
