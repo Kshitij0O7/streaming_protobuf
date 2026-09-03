@@ -10,8 +10,9 @@ import "solana/block_message.proto";
 //   Hawkeye  RiSeVw3ZjNfsaXPRb4mgaqYaEEt41pNNJoDvVh7pgQj   oracle / price publisher (Asset.Oracle)
 //
 // Eternal's deposit/withdrawal bridge (Ember, EMBERpYNE6ehWmXymZZS2skiFmCa9V5dp14e1iduM5qy) is
-// deliberately absent from this schema: collateral flows are out of scope, so nothing here would
-// ever name it, and no other venue has such a component to fill it with.
+// deliberately absent from this schema. It is the *token* leg of a deposit — a USDC transfer in
+// another program — and no other venue has such a component to fill the field with. What the
+// exchange itself records, the trader's collateral moving, is PerpetualCollateralMovementEvent.
 //
 // PROTOCOL-NEUTRAL BY DESIGN. Every number here is already scaled to human units — asset
 // units for sizes, quote currency for prices and amounts. Lots and ticks are Phoenix's
@@ -32,20 +33,21 @@ message PerpetualBlockMessage {
   repeated ParsedPerpetualTransaction Transactions = 2;
 }
 
-// One transaction's perpetual activity, split into four lists. Three of them are the kinds of
-// thing that happen to a trader, and they barely overlap in what they carry: an order never has a
-// position, a PnL never has an order, a counterparty exists only on a fill. Measured over a live
-// sample, every order event filled Order/Amount/Price and nothing else; every PnL filled Position
-// and nothing else. As one flat type a third of each row was necessarily empty.
+// One transaction's perpetual activity, split into six lists. Four of them are the kinds of thing
+// that happen to a trader, and they barely overlap in what they carry: an order never has a
+// position, a PnL never has an order, a counterparty exists only on a fill, and a collateral
+// movement belongs to no market at all. Measured over a live sample, every order event filled
+// Order/Amount/Price and nothing else; every PnL filled Position and nothing else. As one flat
+// type a third of each row was necessarily empty.
 //
-// The fourth, Prices, is split for a different reason — volume. Market state is republished on
-// every price move and dwarfs user activity.
+// Prices and MarketSummaries are split for a different reason — volume. Market state is
+// republished on every price move and dwarfs user activity.
 //
 // Expect lists to be empty on venues built differently: a pool-based perpetual (no order book)
 // produces Fills and Positions but never an Order. That is the intended shape, not a gap.
 //
-// Ordering across all four is EventIndex, a single counter over the whole transaction, so a fill
-// can be placed against the order that caused it and against the mark of the same moment.
+// Ordering across all of them is EventIndex, the event's position in the transaction's log, so a
+// fill can be placed against the order that caused it and against the mark of the same moment.
 message ParsedPerpetualTransaction {
   uint32 Index = 1; // transaction index in the block
   bytes Signature = 2;
@@ -57,6 +59,9 @@ message ParsedPerpetualTransaction {
   repeated PerpetualPositionEvent Positions = 9; // PnL and liquidations
   repeated PerpetualPriceEvent Prices = 6;       // top of book and mark
   repeated PerpetualMarketSummaryEvent MarketSummaries = 10; // open interest, spot, fee totals
+  repeated PerpetualCollateralMovementEvent CollateralMovements = 11; // deposits and withdrawals
+
+  reserved 5; // `repeated PerpetualEvent Events`, the flat type the lists above replaced
 }
 
 message PerpetualExchange {
@@ -108,11 +113,11 @@ message PerpetualCurrency {
   bytes ProgramAddress = 4; // SPL Token or Token-2022
 }
 
-// COLLATERAL FLOWS ARE OUT OF SCOPE for all three event types below. Deposits, withdrawals,
-// internal transfers and funding settlement move exchange-wide collateral rather than a position
-// in a market, and this stream reports positions, orders and trades. Funding is not lost — the
-// protocol repeats each funding payment on the PnL event of the same batch (PerpetualPositionEvent.Funding), and
-// the collateral backing a position on each fill (PerpetualFillEvent.Collateral).
+// NO COLLATERAL MOVEMENT ON the three event types below. They report what happened to a position
+// in a market; the trader's exchange-wide balance moving is PerpetualCollateralMovementEvent, a
+// list of its own. Two flows stay off that list as well, because the protocol already repeats them here:
+// funding settlement, on the PnL event of the same batch (PerpetualPositionEvent.Funding), and the
+// collateral backing a position, on each fill (PerpetualFillEvent.Collateral).
 //
 // Every account field is empty when the chain named no account — never the all-zero address, which
 // would read as the System program. An expiry crank, for one, cancels orders it does not own:
@@ -148,10 +153,13 @@ message PerpetualOrderEvent {
   string Type = 3;
   string Side = 4;   // "bid" / "ask"
 
-  // Position in the transaction, shared across all four lists, so an order can be ordered against
-  // the fill it caused and the mark of that moment. There is no per-event time or slot: Phoenix
-  // states them once per batch and they are the block's own — measured identical to the block on
-  // 2434 of 2434 events — so they live on BlockHeader alone.
+  // Position of the event in the transaction's log, counted over every logged event — including
+  // the ones no list publishes — and shared across all six lists, so an order can be ordered
+  // against the fill it caused and the mark of that moment. Derived from the log alone, so it is
+  // reproducible from the raw transaction and stable across parser versions; indexes with no row
+  // are the unpublished events. There is no per-event time or slot: Phoenix states them once per
+  // batch and they are the block's own — measured identical to the block on 2434 of 2434 events —
+  // so they live on BlockHeader alone.
   uint32 EventIndex = 5;
   uint32 InstructionIndex = 6; // top-level instruction that produced it
 
@@ -192,7 +200,14 @@ message PerpetualFillEvent {
   PerpetualAsset Asset = 10;
 
   PerpetualAmount Amount = 11;    // .Size, .Quote, .Fee, and .Remaining of the maker's order
-  PerpetualPosition Position = 13; // the taker's position after the fill
+
+  // The taker's position after THIS fill — not after the order that produced it. One taker order
+  // is filled by as many makers as it takes and each of those is a row here, so Size walks fill by
+  // fill: consecutive fills of one order chain (a fill's Size is the next fill's SizeBefore), each
+  // moves the position by exactly its own Amount.Size, and the last lands on the position the
+  // venue's TradeSummary states for the order. Position.EntryPrice is on that last fill alone —
+  // see PerpetualPosition.
+  PerpetualPosition Position = 13;
 
   // Plain doubles rather than a PerpetualPrice: a fill has no limit and no trigger, so the shared
   // message would carry two permanently empty columns into the table.
@@ -217,8 +232,15 @@ message PerpetualFillEvent {
   // Which resting side this fill matched, as the chain names it — the join key a fill otherwise
   // lacks. `OrderFilled` names the maker's book order, and MakerOrderId is encoded exactly like
   // PerpetualOrder.Id, so it joins a fill straight back to that order's placement and
-  // cancellation. `SplineFilled` matched protocol liquidity instead (CounterpartyIsAmm), which is
-  // not a book order and is named by SplineId. Exactly one of the two is ever set.
+  // cancellation — on (Asset.Id, MakerOrderId), and against order rows of a book type only. A
+  // conditional order repeats the id of the order it is attached to, so an unfiltered join fans
+  // out; see the note on PerpetualOrder.Id. `SplineFilled` matched protocol liquidity instead
+  // (CounterpartyIsAmm), which is not a book order and is named by SplineId. Exactly one of the
+  // two is ever set.
+  //
+  // This is the maker's order. The taker's own order id is not on a fill: the venue does not state
+  // it there, and the counter it announces on the request is not safely an id (an order that never
+  // rests may not consume it). Tie a taker's fills to their request through the transaction.
   //
   // Without these a fill can only be tied to an order by (transaction, instruction) ordering,
   // which stops being unique the moment one instruction fills several orders — measured on
@@ -287,13 +309,89 @@ message PerpetualPositionEvent {
   bytes Liquidator = 13;
 }
 
+// A trader's collateral entering or leaving the exchange. This is not a position in a market and
+// names no asset: Phoenix Eternal is cross-margin, so one balance backs every market the trader is
+// in, and the events state no market to attribute it to.
+//
+// Two collateral flows are deliberately NOT on this list, because the protocol already repeats them
+// where they belong: funding settlement, on the PnL event of the same batch
+// (PerpetualPositionEvent.Funding), and the collateral backing a position, on each fill
+// (PerpetualFillEvent.Collateral). Internal transfers between sub-accounts move
+// nothing in or out of the exchange and are likewise absent.
+//
+// This message is the additive case the EventIndex contract was written for. Collateral events were
+// always counted in the log position — the counter runs over every logged event, published or not
+// — so publishing them fills indexes that had no row before and moves no index that already had
+// one.
+message PerpetualCollateralMovementEvent {
+  // The wallet that authorised this movement, as the event itself names it — NOT the
+  // transaction's signer, which is a different account whenever a relayer submits the deposit. Such
+  // a transaction carries two signatures, the relayer's first, and the transaction reports that
+  // first one; only the event says which signer moved the money. Expect this to disagree with a
+  // transaction-level signer field, and join on this one.
+  bytes Signer = 1;
+  bytes Trader = 2; // position-owning account (a PDA on Phoenix, not the wallet)
+
+  // "Deposit"   funds entered the exchange
+  // "Withdraw"  funds left it
+  //
+  // The chain distinguishes more states than these two — a withdrawal can be queued or dropped
+  // rather than paid out, each with its own event — but every sampled withdrawal paid out
+  // immediately, so nothing here claims to produce those values.
+  string Type = 3;
+
+  // Position of the event in the transaction's log, the same counter every other event here is
+  // stamped from — see PerpetualOrderEvent.EventIndex.
+  uint32 EventIndex = 4;
+  uint32 InstructionIndex = 5; // top-level instruction that produced it
+
+  PerpetualExchange Exchange = 6;
+
+  // Signed, and the sign is the direction: positive entered the trader's balance, negative left it.
+  // A net flow per trader is then a plain SUM with no CASE on Type. Denominated in Currency, and
+  // already scaled to human units like every other number in this schema.
+  double Amount = 7;
+
+  // Withdrawal fee. The venue states it as an event of its own and debits it on top of Amount, so
+  // what a withdrawal cost the account is |Amount| + Fee. Kept separate for that reason rather than
+  // folded in: measured nonzero on 1402 of 2540 sampled withdrawals, up to 0.5.
+  double Fee = 8;
+
+  // The exchange's own collateral token — on Phoenix Eternal PhUsd, the same mint as
+  // PerpetualAsset.QuoteCurrency, since every market settles in it. NOT the USDC a deposit was
+  // funded with: that leg is a token transfer in the bridge program, a different instruction with
+  // its own mint, and PhUsd only moves 1:1 against it.
+  PerpetualCurrency Currency = 9;
+
+  // No balance-after field. The venue publishes one on a deposit and none on a withdrawal, so it
+  // would read 0 on every withdrawal — indistinguishable from an account that really went flat.
+}
+
 message PerpetualOrder {
-  // Order id in the venue's own order book — globally unique, and the key an order, its fills and
-  // its cancellation are joined by. A conditional order (stop-loss / trigger) is NOT in the book
-  // and has no id of its own until it fires; see ConditionalId. Where one appears on a conditional
-  // order it is a book order *related* to it, and which one depends on the event: the order the
-  // stop-loss created when it fired, or, for a trigger order, the resting order it is attached to.
-  // Empty when the chain named none — never eight zero bytes.
+  // Order id in the venue's own order book, and the key an order, its fills and its cancellation
+  // are joined by — **join on (Asset.Id, Id), not on Id alone**. The venue counts orders per
+  // market, so two markets reuse the same numbers: a market listed later passes through ids an
+  // older one burned long ago (measured live, one market at 172640 while another was at 61009089).
+  //
+  // On Phoenix Eternal the number is the market's order counter for an ask and its bitwise
+  // complement for a bid, which is why bid ids render around 1.8e19. Orders and fills publish the
+  // same representation, so joins are unaffected; ordering or comparing ids across sides is not
+  // meaningful. Empty when the chain named none — never eight zero bytes.
+  //
+  // A conditional order (stop-loss / trigger) is NOT in the book and has no id of its own until it
+  // fires; see ConditionalId. Where one appears on a conditional order it is a book order *related*
+  // to it, and which one depends on the event:
+  //
+  //   - on an execution, the order the conditional order became when it fired — the same order a
+  //     later fill or cancellation names, which is what makes the join right;
+  //   - on a trigger order's *placement*, the resting order it is attached to — a real id, but of
+  //     a **different** order that has its own row.
+  //
+  // The second case makes the id non-unique across rows: a limit order placed with a take-profit
+  // and a stop-loss produces three rows carrying it (measured: transaction
+  // 2Can1qL7HZ6pchU5S6wgRWMeF2vvM4SHCBNwT9Ej4oYuk9i2A9JYJub1vSE4f2ovULow6tqDJmmELDpQ39Y2Y8D7).
+  // Anything joining fills to orders by this id must restrict to book-order event types — the
+  // event Type, not Order.Type — or it fans out.
   bytes Id = 1;
   bytes ClientId = 2;        // caller's own id; empty when none was sent
   // "limit", "market", "post-only" for book orders; "stop-loss" or "take-profit" for conditional
@@ -310,10 +408,21 @@ message PerpetualOrder {
 
   // Identifies a conditional order (stop-loss, trigger) *within one trader and one market* — it is
   // NOT unique on its own, and it is not an order-book id. Join on (Trader, Asset.Id,
-  // ConditionalId), which is how the venue itself addresses these orders: on Phoenix Eternal a
-  // stop-loss lives in a fixed-size slot array keyed by (trader, asset), so its cancellation
-  // identifies it by slot rather than by id and restates none of its parameters — side, size and
-  // prices are recovered by joining back to the placement.
+  // ConditionalId), which is how the venue itself addresses these orders: a cancellation restates
+  // none of the order's parameters, so side, size and prices are recovered from the placement.
+  //
+  // How well that join identifies one order depends on the mechanism behind the row, and on
+  // Phoenix Eternal there are two:
+  //
+  //   - stop-losses ("StopLossPlaced" / "TakeProfitPlaced" / "ConditionalCancelled" /
+  //     "ConditionalExecuted") carry the venue's counter of this trader's conditional orders in
+  //     this market. A placement takes the next value and its cancellation restates that value, so
+  //     the join names exactly one order. Measured on one trader and market, the counter ran
+  //     19285→19343 over an hour with every cancellation naming the placement it ended.
+  //   - trigger orders ("TriggerPlaced" / "TriggerCancelled" / "TriggerExecuted") carry the index
+  //     of a slot in the trader's conditional-orders account, and a slot holds two legs. A
+  //     take-profit and a stop-loss placed together share one value; only Order.Type separates
+  //     them, and a cancellation states no side, so which leg it ended is not recoverable.
   //
   // Present on conditional orders only, and opaque bytes like every other identifier here: the
   // next venue may address a conditional order by a hash or a string rather than by a slot index.
@@ -344,8 +453,16 @@ message PerpetualPrice {
 
 message PerpetualPosition {
   double Size = 1;       // position after the event, signed (negative = short)
-  double SizeBefore = 2;
-  double EntryPrice = 3; // average entry, folded from the protocol's virtual-quote balance
+  double SizeBefore = 2; // position before it — Size less what this event itself moved
+
+  // Average entry of the whole position, folded out of the protocol's virtual-quote balance.
+  //
+  // On a fill it is published on the LAST fill of a taker order and absent (0) on the others. The
+  // venue states the virtual-quote balance once per order, after it, so a per-fill average entry
+  // is not derivable at all, and repeating the order-final one next to a per-fill Size would be a
+  // number belonging to no row. A single-fill order is its own last fill, which is the common
+  // shape; the value is also on the taker's PnL event in the same transaction.
+  double EntryPrice = 3;
 }
 
 // Market / oracle state, republished on every price move. Type is one of:
@@ -365,8 +482,8 @@ message PerpetualPosition {
 // zeros. A gap is recoverable; a fabricated Mark of 0 is not.
 message PerpetualPriceEvent {
   string Type = 1;
-  // Same counter as PerpetualEvent.EventIndex, and no per-row time or slot for the same reason —
-  // see the note there.
+  // Same counter as PerpetualOrderEvent.EventIndex, and no per-row time or slot for the same
+  // reason — see the note there.
   uint32 EventIndex = 2;
   uint32 InstructionIndex = 3;
   uint64 SequenceNumber = 6; // per-asset sequence number — ordering and dedup key
@@ -394,8 +511,8 @@ message PerpetualPriceEvent {
 // event.
 message PerpetualMarketSummaryEvent {
   string Type = 1;
-  // Same counter as PerpetualEvent.EventIndex, and no per-row time or slot for the same reason —
-  // see the note there.
+  // Same counter as PerpetualOrderEvent.EventIndex, and no per-row time or slot for the same
+  // reason — see the note there.
   uint32 EventIndex = 2;
   uint32 InstructionIndex = 3;
 
